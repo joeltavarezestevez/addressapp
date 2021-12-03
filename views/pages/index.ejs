@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head'); %>
+</head>
+<body>
+
+<header>
+    <%- include('../partials/header'); %>
+</header>
+<main class="container-fluid px-4"> 
+    <div class="row pt-3">
+        <div class="col-12">
+            <div id="alertSuccess"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+           <h3>Customers</h3>
+           <hr>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <a href="/app/create" class="btn btn-success">
+                <i class="fa fa-plus"></i>&nbsp;New Customer
+            </a>                        
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col">
+           <div class="table-responsive"> 
+               <table id="tableCustomers" class="table table-striped table-bordered table-responsive" style="width:100%">
+               <thead>
+                 <tr>
+                    <th>NAME</th>
+                    <th>GENDER</th>                                
+                    <th>PHONE NUMBER</th>
+                    <th>OPTIONS</th>
+                </tr>
+               </thead>
+               <tbody>
+               </tbody>
+               </table>
+           </div>
+        </div>
+    </div>
+</main>
+<!-- Modal -->
+<div class="modal fade" id="modalDelete" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Delete Customer <span id="customername"></span></h5>
+                <input type="hidden" id="customerId">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="deleteCustomer">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- footer -->
+<footer>
+    <%- include('../partials/footer'); %>
+</footer>
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <img src="/assets/img/logo.png" width="25" class="rounded me-2" alt="logo"/>
+            <strong class="me-auto">Customer Deleted</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <span class="text-success" id="message"></span>
+        </div>
+    </div>
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <img src="/assets/img/logo.png" width="25" class="rounded me-2" alt="logo"/>
+            <strong class="me-auto">Error Deleting Customer</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <span class="text-danger" id="message"></span>
+        </div>
+    </div>    
+</div>
+<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap5.min.js"></script>        
+<script>
+    $(document).ready(function() {   
+        const url = 'http://localhost:3000/api/v1/customers';
+        var table = $('#tableCustomers').DataTable({            
+            "ajax":{
+                "url": url,
+                "dataSrc":""
+            },
+            "columns":[
+                {"data":"name"},
+                {"data":"gender"},
+                {"data":"phonenumber"},
+                {
+                    "mData": "_id",
+                    "mRender": function (data, type, row) {
+                        return "<a href='/app/view/" + data + "' class='btn btn-primary' title='View Customer'><i class='fa fa-eye'></i></a>&nbsp;&nbsp;<a href='/app/edit/" + data + "' class='btn btn-info' title='Edit Customer'><i class='fa fa-pencil'></i></a>&nbsp;&nbsp;<button type='button' class='btn btn-danger' id='delete' name='delete' title='Delete Customer'><i class='fa fa-trash'></i></button>";
+                    }
+                }                
+            ],          
+            "columnDefs":[{
+                "targets":[2]
+            }]
+        });
+
+        $('#tableCustomers tbody').on('click', 'button', function() {
+            var data = table.row( $(this).parents('tr') ).data();
+            $("#customerId").val(data._id);
+            $('#customername').html(data.name);
+            $('#modal-body').html('Are you sure you want to delete the customer <strong>' + data.name + '</strong>?');
+            $('#modalDelete').modal('show');
+        });
+
+        $('#deleteCustomer').on('click', function() {
+            const id = $("#customerId").val();
+            fetch('/api/v1/customers/' + id, {
+                method: 'delete',
+            })
+            .then(response => {
+                if (response.ok) {
+                    $('#modalDelete').modal('hide');
+                    $('#successToast .toast-body #message').html('Customer deleted successfully!');
+                    var toast = new bootstrap.Toast($('#successToast'));
+                    toast.show();
+                    setTimeout(function() {
+                       location.reload()
+                    }, 3000);
+                }
+            })
+            .catch(err => {
+                $('#errorToast .toast-body #message').html(err.message);
+                var toast = new bootstrap.Toast($('#errorToast'));
+                toast.show();
+            })            
+        })
+    });   
+</script>
+</body>
+</html>
