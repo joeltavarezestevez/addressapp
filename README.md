@@ -21,7 +21,7 @@ DB_PASS=DATABASE_SECRET
 DB_NAME=DATABASE_NAME
 PORT=USE_PORT
 ```
-- install the dependencies and start the server.
+- Install the dependencies and start the server.
 
 ```sh
 cd addressapp
